@@ -1,0 +1,72 @@
+[
+    {
+        "type" : "readers.e57",
+		"filename" : "corps_de_rue_base.e57"
+    },
+    {
+        "type":"filters.csf",
+		"resolution": 0.3,
+		"threshold": 0.2,
+		"rigidness": 1
+		
+    },
+	{
+        "type" : "filters.neighborclassifier",
+        "domain" : "Classification[1:2]",
+        "k" : 50
+    },
+	{
+        "type" : "filters.neighborclassifier",
+        "domain" : "Classification[1:2]",
+        "k" : 50
+    },
+	{
+        "type":"filters.covariancefeatures",
+		"where": "(Classification==2)",
+        "radius": 0.05,
+        "threads": 20,
+        "feature_set": "Verticality,Anisotropy"
+    },
+	{
+        "type": "filters.assign",
+        "value": "Classification = 13 WHERE ((Classification == 2) && (Verticality >= 0.5) && (Anisotropy) >= 0.7)"
+	},
+	{
+        "type" : "filters.neighborclassifier",
+        "domain" : "Classification[2:2]",
+        "k" : 20
+    },
+	{
+        "type":"filters.cluster",
+		"where": "(Classification==1 || Classification==13)",
+		"tolerance": 0.05,
+		"min_points": 100
+    },
+	{
+        "type": "filters.assign",
+        "value": "Classification = 1 WHERE ((Classification == 13) && (ClusterID != 0))"
+	},
+	{
+        "type": "filters.assign",
+        "value": "Classification = 2 WHERE ((Classification == 13) && (ClusterID == 0))"
+	},
+	{
+        "type":"filters.hag_nn"
+    },
+	{
+        "type": "filters.assign",
+        "value": "Classification = 2 WHERE ((Classification == 1) && (HeightAboveGround <= 0.4) && (ClusterID == 0))"
+	},
+	{
+        "type":"filters.python",
+        "script":"F:/mmorin/ndp_tests/codes/filtres.python/cluster_to_ground_v2.py",
+        "function":"cluster_to_ground",
+        "module":"anything"
+    },
+	{
+		"type": "writers.las",
+		"minor_version": 4,
+		"filename" : "sol_csf_v3.2.2_optimtest.las"
+	}
+
+]
