@@ -1,0 +1,19 @@
+[
+    {
+        "type" : "readers.las",
+		"filename": "__tmp__.las",
+		"extra_dims": ["ClusterID = double", "OriginId = float"]
+    },
+	{
+        "type":"filters.python",
+		"script": "F:/mmorin/ndp_tests/codes/filtres.python/mobile_objects_classification.py",
+		"function": "mobile_objects_classification",
+		"where": "(Classification != 2) && (Classification != 65) ",
+		"module": "anything"
+    },
+	{
+		"type": "writers.las",
+		"filename":"__tmp__.las",
+		"extra_dims":"ClusterID = double"
+	}
+]

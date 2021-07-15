@@ -1,0 +1,20 @@
+[
+    {
+        "type" : "readers.las",
+		"filename" : "*.las",
+		"extra_dims": "OriginId = float"
+    },
+	{
+		"type" : "filters.merge"
+	},
+	{
+		"type" : "filters.sample",
+		"radius": 0.001
+	},
+	{
+		"type" : "writers.las",
+		"filename" : "F:/mmorin/ndp_tests/kennedy/base_cloud/corps_de_rue_base.las",
+		"extra_dims" : "all",
+		"minor_version": 4
+	}
+]

@@ -1,0 +1,8 @@
+[
+    {
+        "type" : "readers.e57"
+    },
+	{
+		"type": "writers.las"
+	}
+]
