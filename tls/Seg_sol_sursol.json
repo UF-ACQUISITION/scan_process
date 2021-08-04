@@ -52,7 +52,8 @@
         "value": "Classification = 2 WHERE ((Classification == 13) && (ClusterID == 0))"
 	},
 	{
-        "type":"filters.hag_nn"
+        "type":"filters.hag_nn",
+		"count":10
     },
 	{
         "type": "filters.assign",
