@@ -1,0 +1,11 @@
+[
+    {
+        "type" : "readers.las"
+    },
+	{
+        "type":"filters.python"
+    },
+	{
+		"type": "writers.las"
+	}
+]

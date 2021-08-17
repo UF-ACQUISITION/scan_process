@@ -20,15 +20,19 @@ def flying_cluster(ins,outs):
     #boucle pour extraire le HeightAboveGround minimum de chaque cluster, stocké dans HAG_min_cluster
     for i in range (0,n_points):
         if (ins['ClusterID'][i] != 0):
+            
+            if HAG_min_cluster[ins['ClusterID'][i]] == 1.0:
+                HAG_min_cluster[ins['ClusterID'][i]] =  ins['HeightAboveGround'][i]
+            
             if ins['HeightAboveGround'][i] < HAG_min_cluster[ins['ClusterID'][i]]:
                 HAG_min_cluster[ins['ClusterID'][i]] = ins['HeightAboveGround'][i]
-        
+    #print(HAG_min_cluster)    
     
     #boucle pour changer la classe des points appartenant aux clusters répondant au critère d'HAG
     for i in range (0,n_points):
         if (ins['ClusterID'][i] != 0):
             if HAG_min_cluster[ins['ClusterID'][i]] > 0.50:
-                ins['Classification'][i] = 32
+                ins['Classification'][i] = 65
                 
                  
     outs['Classification'] = ins['Classification']

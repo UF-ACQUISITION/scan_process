@@ -1,0 +1,17 @@
+[
+    {
+        "type" : "readers.las"
+    },
+	{
+        "type":"filters.cluster"
+    },
+	{
+        "type":"filters.hag_nn"
+    },
+	{
+        "type":"filters.python"
+    },
+	{
+		"type": "writers.las"
+	}
+]

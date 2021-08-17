@@ -1,0 +1,20 @@
+[
+    {
+        "type" : "readers.las",
+		"filename" : "__tmp__.las",
+		"extra_dims": "ClusterID = double, mean_anisotropy = double, mean_surf_var = double"
+    },
+	{
+        "type":"filters.python",
+		"script": "F:/mmorin/ndp_tests/codes/filtres.python/global_descriptors_tranfo_meth.py",
+		"function": "global_descriptors_transfo_method",
+		"where": "(Classification == 1) && (ClusterID != 0)",
+		"module": "anything"
+    },
+	{
+		"type": "writers.las",
+		"extra_dims": ["ClusterID = double"],
+		"filename" : "__tmp__bis.las"
+	}
+
+]
