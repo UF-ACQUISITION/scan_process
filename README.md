@@ -26,6 +26,6 @@ On récupère tous les fichiers du dossier grâce à la fonction os.listdir, on 
 
 Cette fonction permet de supprimer les fichiers dont la taille est inférieure à la limite fixée dans FILE_SIZE.
 On itère cette fois ci sur tous les fichiers '.las' et pour chacun on vérifie sa taille.
-On récupère la taille du fichier (en byte) grâce à la fonction os.path.getsize et on la divise par 1024 pour l'obtenir en Ko.
+On récupère la taille du fichier (en byte) grâce à la fonction os.path.getsize et on la divise deux fois par 1024 pour l'obtenir en Mo.
 
 ## Mobile
