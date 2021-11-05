@@ -28,7 +28,7 @@ def SupSmallFiles(files):
     for file in files:
         filename, file_extension = os.path.splitext(DIR_PATH + "\\" + file)
         # La taille est initialement donnée en byte, on la divise donc par 1024 pour l'avoir en Ko
-        size = round(os.path.getsize(filename + file_extension) / 1024)
+        size = round((os.path.getsize(filename + file_extension) / 1024) / 1024)
         if size < FILE_SIZE:
             os.remove(filename + file_extension)
 
