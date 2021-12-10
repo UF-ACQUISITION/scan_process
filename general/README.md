@@ -4,4 +4,4 @@
 
 ### filtre_BinSup_SmallFiles.py
 
-Ce script chargé de trier les fichiers produits dans un répertoire et de ne conserver que ceux qui sont supérieur à une taille minimale.
+Ce script est chargé de trier les fichiers produits dans un répertoire et de ne conserver que ceux qui sont supérieur à une taille minimale.
