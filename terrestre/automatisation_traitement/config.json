@@ -1,0 +1,19 @@
+{
+  "inputs" :  {
+    "e572las" : "Chemin vers l'exécutable e572las.",
+    "e57" : "Chemin vers le fichier e57."
+  },
+  "outputs" : {
+    "lazFile" : "Chemin où sera rangé le fichier e57 converti en laz.",
+    "lazFiltered" : "Chemin où sera rangé le fichier filtré."
+  },
+  "noiseFilter" : {
+    "kernelRadius" : 0,
+    "nSigma" : 0,
+    "removeIsolatedPoints" : "True",
+    "useKnn" : "False",
+    "knn" : 0,
+    "useAbsoluteError" : "False",
+    "absoluteError" : 0
+  }
+}
