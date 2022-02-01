@@ -1,0 +1,36 @@
+{
+  "create_new_location": {
+    "gisdbase": "Lien vers la base WinGRASS.",
+    "location_name": "Nom de la localisation.",
+    "epsg": "Code epsg (sans guillemets)",
+    "g.mapset": {
+      "mapset_name": "Nom du mapset."
+    }
+  },
+  "import_file": {
+    "v.in.lidar": {
+      "input": "Chemin vers votre fichier las.",
+      "output": "location_name@mapset_name",
+      "class_filter": "Classe des points que l'on veut importer (sans guillemets)"
+    }
+  },
+  "interpolation": {
+    "g.region": {
+      "vector": "location_name@mapset_name",
+      "res": "Resolution. (sans guillemets)"
+    },
+    "v.surf.rst": {
+      "input": "location_name@mapset_name",
+      "elevation": "Nom de la sortie.",
+      "smooth": "Lissage (sans guillemets)",
+      "dmin": "Distance minimale entre les points (sans guillemets)",
+      "segmax": "Nombre maximal de points dans un segment (sans guillemets)",
+      "npmin": "Nombre minimal de points pour l'approximation dans un segment (> segmax, sans guillemets)"
+    },
+    "r.out.gdal": {
+      "input": "elevation@mapset_name",
+      "output": "Chemin vers le fichier de sortie.",
+      "format": "Format du fichier."
+    }
+  }
+}
