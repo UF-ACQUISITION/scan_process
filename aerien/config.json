@@ -1,36 +1,37 @@
 {
   "create_new_location": {
-    "gisdbase": "Lien vers la base WinGRASS.",
-    "location_name": "Nom de la localisation.",
-    "epsg": "Code epsg (sans guillemets)",
+    "gisdbase": "D:\\APPS\\WinGRASS",
+    "location_name": "location_heron",
+    "epsg": 2154,
     "g.mapset": {
-      "mapset_name": "Nom du mapset."
+      "mapset_name": "MAPSET_HERON"
     }
   },
   "import_file": {
     "v.in.lidar": {
-      "input": "Chemin vers votre fichier las.",
-      "output": "location_name@mapset_name",
-      "class_filter": "Classe des points que l'on veut importer (sans guillemets)"
+      "input": "D:\\Documents\\MISSIONS\\interpolation_raster\\input\\heron_min2.las",
+      "output": "location_heron@MAPSET_HERON",
+      "class_filter": 2
     }
   },
   "interpolation": {
     "g.region": {
-      "vector": "location_name@mapset_name",
-      "res": "Resolution. (sans guillemets)"
+      "vector": "location_heron@MAPSET_HERON",
+      "res": 15,
+      "grow": 200
     },
     "v.surf.rst": {
-      "input": "location_name@mapset_name",
-      "elevation": "Nom de la sortie.",
-      "smooth": "Lissage (sans guillemets)",
-      "dmin": "Distance minimale entre les points (sans guillemets)",
-      "segmax": "Nombre maximal de points dans un segment (sans guillemets)",
-      "npmin": "Nombre minimal de points pour l'approximation dans un segment (> segmax, sans guillemets)"
+      "input": "location_heron@MAPSET_HERON",
+      "elevation": "elevation_heron",
+      "smooth": 2,
+      "dmin": 0.3,
+      "segmax": 1200,
+      "npmin": 1600
     },
     "r.out.gdal": {
-      "input": "elevation@mapset_name",
-      "output": "Chemin vers le fichier de sortie.",
-      "format": "Format du fichier."
+      "input": "elevation_heron@MAPSET_HERON",
+      "output": "D:\\Documents\\MISSIONS\\interpolation_raster\\output\\heron.tif",
+      "format": "GTiff"
     }
   }
 }
