@@ -17,7 +17,8 @@
   "interpolation": {
     "g.region": {
       "vector": "location_name@mapset_name",
-      "res": "Resolution. (sans guillemets)"
+      "res3": "Resolution. (sans guillemets)",
+      "grow": "Buffer. (sans guillemets)"
     },
     "v.surf.rst": {
       "input": "location_name@mapset_name",
