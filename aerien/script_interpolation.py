@@ -6,7 +6,7 @@ import json
 
 import time
 
-with open("D:\\Documents\\GitHub\\scan_process\\aerien\\config.json") as jsonFile:
+with open(input("Veuillez entrer le chemin vers votre fichier de config : ")) as jsonFile:
     config = json.load(jsonFile)
     jsonFile.close()
 
