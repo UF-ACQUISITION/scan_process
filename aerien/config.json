@@ -14,6 +14,10 @@
       "class_filter": "Classe des points que l'on veut importer (sans guillemets)"
     }
   },
+  "parallel": {
+    "regions": "Nombre de régions souhaitées pour le découpage (sans guillemets)",
+    "nbProcesses": "Nombre de processus souhaités pour la parallélisation (sans guillemets)"
+  },
   "interpolation": {
     "g.region": {
       "vector": "location_name@mapset_name",
