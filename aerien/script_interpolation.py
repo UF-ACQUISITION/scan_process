@@ -3,10 +3,11 @@ from grass.pygrass.gis.region import Region
 from grass.script import core as grass
 from multiprocessing import Process
 import json
-
 import time
 
-with open(input("Veuillez entrer le chemin vers votre fichier de config : ")) as jsonFile:
+import queue
+
+with open(input("Veuillez entrer le chemin de votre fichier de config :")) as jsonFile:
     config = json.load(jsonFile)
     jsonFile.close()
 
@@ -17,7 +18,8 @@ def check_values():
     buffer = config_region.get("grow")
     npmin = config_surf.get("npmin")
     dmin = config_surf.get("dmin")
-    segmax = config_surf.get("segmax")
+    segmax = config_surf.get("segmax")
+
     res3 = config_region.get("res3")
 
     if(buffer * res3 < npmin):
@@ -55,8 +57,8 @@ def import_file():
            overwrite=True
           )
 
-#Permet de diviser le jeu de donnees en plusieurs regions et d'interpoler
-def create_region(regions, i, nRegion):
+
+def enQueue_regions(regions, i, nRegion, queue):
     config_region = config.get("interpolation").get("g.region")
     config_surf = config.get("interpolation").get("v.surf.rst")
     config_gdal = config.get("interpolation").get("r.out.gdal")
@@ -65,86 +67,111 @@ def create_region(regions, i, nRegion):
 
     xDist = r.east - r.west
     yDist = r.north - r.south
+    name = "region_" + str(nRegion)
 
-#Partie superieure du jeu de donnees
+    regions = config.get("parallel").get("regions")
+
+    #Partie superieure du jeu de donnees
     if(nRegion < regions/2):
         #Decoupage de la region
-        Module(
+        region = Module(
             "g.region",
-            flags = "pu",
+            flags = "u",
             vector = config_region.get("vector"), 
             res3 = config_region.get("res3"),
             n = r.north,
             s = r.south + yDist/2,
             e = r.east - (((regions/2 - 1)-i) * (xDist/(regions/2))),
             w = r.west + i * (xDist/(regions/2)),
-            grow = config_region.get("grow")
-        )
-
-        #Interpolation
-        Module(
-            "v.surf.rst",
-            input = config_surf.get("input"),
-            elevation = "region_" + str(nRegion) + "_elevation",
-            smooth = config_surf.get("smooth"),
-            segmax = config_surf.get("segmax"),
-            npmin = config_surf.get("npmin"),
+            grow = config_region.get("grow"),
+            save = name,
             overwrite = True
         )
 
     #Partie inferieure du jeu de donnees
     else:
         #Decoupage de la region
-        Module(
+        region = Module(
             "g.region",
-            flags = "pu",
+            flags = "u",
             vector = config_region.get("vector"), 
             res3 = config_region.get("res"),
             n = r.north - yDist/2,
             s = r.south,
             e = r.east - (((regions/2 - 1)-i) * (xDist/(regions/2))),
-            w = r.west + i * (xDist/(regions/2)),
-            grow = config_region.get("grow")
-        )
-        #Interpolation
-        Module(
-            "v.surf.rst",
-            input = config_surf.get("input"),
-            elevation = "region_" + str(nRegion) + "_elevation",
-            smooth = config_surf.get("smooth"),
-            dmin = config_surf.get("dmin"),
-            segmax = config_surf.get("segmax"),
-            npmin = config_surf.get("npmin"),
+            w = r.west + i * (xDist/(regions/2)),
+            grow = config_region.get("grow"),
+            save = name,
             overwrite = True
         )
+
+    queue.put(name)
+
+def interpolation(nomRegion):
+    config_region = config.get("interpolation").get("g.region")
+    config_surf = config.get("interpolation").get("v.surf.rst")
+    config_gdal = config.get("interpolation").get("r.out.gdal")
+
+    regions = config.get("parallel").get("regions")
+
+    r = Region()
+
+    xDist = r.east - r.west
+    yDist = r.north - r.south
+
+    Module(
+        "g.region",
+        flags = "du",
+        region = nomRegion
+    )
+
+    #Interpolation
+    Module(
+        "v.surf.rst",
+        input = config_surf.get("input"),
+        elevation = nomRegion + "_elevation",
+        smooth = config_surf.get("smooth"),
+        segmax = config_surf.get("segmax"),
+        npmin = config_surf.get("npmin"),
+        overwrite = True
+    )
 
     #Enregistrement des regions interpolees en .tif
     Module(
         "r.out.gdal",
-        input = "region_" + str(nRegion) + "_elevation",
-        output = config_gdal.get("output") + str(nRegion) + "_output.tif",
+        input = nomRegion + "_elevation",
+        output = config_gdal.get("output") + nomRegion + "_output.tif",
         format = config_gdal.get("format"),
         overwrite = True
     )
 
 if __name__ == "__main__":
-    valuesOk = check_values()
-    if(valuesOk):
+    valuesOk = check_values()
+    if(valuesOk):
         create_new_location()
         import_file()
-        regions = input("En combien de régions voulez vous découper le vecteur ?")
 
-        i = 0
+        regions = config.get("parallel").get("regions")
+        nbProcesses = config.get("parallel").get("nbProcesses")
         processes = []
+        i = 0
 
-        for j in range(regions):
-            p = Process(target=create_region, args=(regions, i, j))
-            p.start()
-            processes.append(p)
+        q = queue.Queue()
+
+        for r in range(regions):
+            enQueue_regions(regions, i, r, q)
             if i < (regions / 2) - 1:
                 i += 1
             else:
-                i = 0
-        
-        for p in processes:
-            p.join()
+                i = 0
+
+        while not q.empty():
+            if len(processes) <= nbProcesses:
+                p = Process(target=interpolation, args=(q.get(),))
+                processes.append(p)
+                p.start()
+
+            for p in processes:
+                if not p.is_alive():
+                    processes.remove(p)
+                    break
