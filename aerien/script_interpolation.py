@@ -7,7 +7,7 @@ import time
 
 import queue
 
-with open("D:\\Documents\\GitHub\\scan_process\\aerien\\config_dev.json") as jsonFile:
+with open(input("Veuillez entrer le chemin de votre fichier de config :")) as jsonFile:
     config = json.load(jsonFile)
     jsonFile.close()
 
@@ -112,7 +112,7 @@ def interpolation(nomRegion):
     config_surf = config.get("interpolation").get("v.surf.rst")
     config_gdal = config.get("interpolation").get("r.out.gdal")
 
-    regions = config.get("parallel").get("regions")
+    regions = config.get("parallel").get("regions")
 
     r = Region()
 
@@ -148,13 +148,13 @@ def interpolation(nomRegion):
 if __name__ == "__main__":
     valuesOk = check_values()
     if(valuesOk):
-        #create_new_location()
-        #import_file()
+        create_new_location()
+        import_file()
 
         regions = config.get("parallel").get("regions")
         nbProcesses = config.get("parallel").get("nbProcesses")
         processes = []
-        i = 0
+        i = 0
 
         q = queue.Queue()
 
