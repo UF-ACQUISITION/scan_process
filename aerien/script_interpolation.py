@@ -7,7 +7,7 @@ import time
 
 import queue
 
-with open("D:\\Documents\\GitHub\\scan_process\\aerien\\config_dev.json") as jsonFile:
+with open(input("Veuillez entrer le chemin vers votre fichier de config : ")) as jsonFile:
     config = json.load(jsonFile)
     jsonFile.close()
 
