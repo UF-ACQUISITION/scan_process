@@ -7,10 +7,13 @@ import time
 
 import queue
 
-with open(input("Veuillez indiquer le chemin vers votre fichier de config : ")) as jsonFile:
+with open("D:\\Documents\\GitHub\\scan_process\\aerien\\config_dev.json") as jsonFile:
     config = json.load(jsonFile)
     jsonFile.close()
-
+
+#Verification des valeurs donnees dans le fichier de config
+#Retourne True si les valeurs sont coherente
+#Retourne False avec un message d'erreur sinon
 def check_values():
     config_region = config.get("interpolation").get("g.region")
     config_surf = config.get("interpolation").get("v.surf.rst")
@@ -19,7 +22,6 @@ def check_values():
     npmin = config_surf.get("npmin")
     dmin = config_surf.get("dmin")
     segmax = config_surf.get("segmax")
-
     res3 = config_region.get("res3")
 
     if(buffer * res3 < npmin):
@@ -37,7 +39,8 @@ def check_values():
 
 #Permet de creer une nouvelle une nouvelle location et un nouveau mapset dans WinGRASS
 def create_new_location():
-    config_location = config.get("create_new_location")
+    config_location = config.get("create_new_location")
+    #Creation de
     grass.create_location(config_location.get("gisdbase"), config_location.get("location_name"), config_location.get("epsg"))
     Module("g.mapset",
            flags="c",
@@ -56,7 +59,6 @@ def import_file():
            class_filter=config_import.get("class_filter"),
            overwrite=True
           )
-
 
 def enQueue_regions(regions, i, nRegion, queue):
     config_region = config.get("interpolation").get("g.region")
@@ -113,8 +115,8 @@ def interpolation(nomRegion, lock):
     config_gdal = config.get("interpolation").get("r.out.gdal")
 
     regions = config.get("parallel").get("regions")
-
-    lock.acquire()
+
+    lock.acquire()
 
     r = Region()
 
@@ -126,8 +128,8 @@ def interpolation(nomRegion, lock):
         flags = "du",
         region = nomRegion
     )
-
-    lock.release()
+
+    lock.release()
 
     #Interpolation
     Module(
