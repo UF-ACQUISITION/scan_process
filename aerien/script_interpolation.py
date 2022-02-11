@@ -7,7 +7,7 @@ import time
 
 import queue
 
-with open("D:\\Documents\\GitHub\\scan_process\\aerien\\config_dev.json") as jsonFile:
+with open(input("Veuillez indiquer le chemin vers votre fichier de config : ")) as jsonFile:
     config = json.load(jsonFile)
     jsonFile.close()
 
@@ -113,8 +113,8 @@ def interpolation(nomRegion, lock):
     config_gdal = config.get("interpolation").get("r.out.gdal")
 
     regions = config.get("parallel").get("regions")
-
-    lock.acquire()
+
+    lock.acquire()
 
     r = Region()
 
@@ -126,8 +126,8 @@ def interpolation(nomRegion, lock):
         flags = "du",
         region = nomRegion
     )
-
-    lock.release()
+
+    lock.release()
 
     #Interpolation
     Module(
