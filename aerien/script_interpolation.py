@@ -1,7 +1,7 @@
 from grass.pygrass.modules import Module
 from grass.pygrass.gis.region import Region
 from grass.script import core as grass
-from multiprocessing import Process
+from multiprocessing import Process, Lock
 import json
 import time
 
@@ -107,12 +107,14 @@ def enQueue_regions(regions, i, nRegion, queue):
 
     queue.put(name)
 
-def interpolation(nomRegion):
+def interpolation(nomRegion, lock):
     config_region = config.get("interpolation").get("g.region")
     config_surf = config.get("interpolation").get("v.surf.rst")
     config_gdal = config.get("interpolation").get("r.out.gdal")
 
-    regions = config.get("parallel").get("regions")
+    regions = config.get("parallel").get("regions")
+
+    lock.acquire()
 
     r = Region()
 
@@ -124,6 +126,8 @@ def interpolation(nomRegion):
         flags = "du",
         region = nomRegion
     )
+
+    lock.release()
 
     #Interpolation
     Module(
@@ -154,7 +158,8 @@ if __name__ == "__main__":
         regions = config.get("parallel").get("regions")
         nbProcesses = config.get("parallel").get("nbProcesses")
         processes = []
-        i = 0
+        i = 0
+        lock = Lock()
 
         q = queue.Queue()
 
@@ -167,7 +172,7 @@ if __name__ == "__main__":
 
         while not q.empty():
             if len(processes) <= nbProcesses:
-                p = Process(target=interpolation, args=(q.get(),))
+                p = Process(target=interpolation, args=(q.get(), lock))
                 processes.append(p)
                 p.start()
 
