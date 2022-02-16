@@ -4,15 +4,14 @@ from grass.script import core as grass
 from multiprocessing import Process, Lock
 import json
 import time
-
 import queue
 
-with open(input("Veuillez entrer le chemin vers votre fichier de config : ")) as jsonFile:
+with open("D:\\Documents\\GitHub\\scan_process\\aerien\\config_dev.json") as jsonFile:
     config = json.load(jsonFile)
     jsonFile.close()
-
-#Verification des valeurs donnees dans le fichier de config
-#Retourne True si les valeurs sont coherente
+
+#Verification des valeurs donnees dans le fichier de config
+#Retourne True si les valeurs sont coherente
 #Retourne False avec un message d'erreur sinon
 def check_values():
     config_region = config.get("interpolation").get("g.region")
@@ -36,12 +35,13 @@ def check_values():
     else:
         return True
 
-
 #Permet de creer une nouvelle une nouvelle location et un nouveau mapset dans WinGRASS
 def create_new_location():
-    config_location = config.get("create_new_location")
+    config_location = config.get("create_new_location")
+
     #Creation de la location, on passe la base, le nom de la location et la projection souhaitee
-    grass.create_location(config_location.get("gisdbase"), config_location.get("location_name"), config_location.get("epsg"))
+    grass.create_location(config_location.get("gisdbase"), config_location.get("location_name"), config_location.get("epsg"))
+
     #Creation du jeu de carte de la location
     Module("g.mapset",
            flags="c",
@@ -51,8 +51,10 @@ def create_new_location():
           )
 
 #Permet d'importer le jeu de donnees a traiter, ici, on importe un nuage de points qui va etre stocke sous la forme d'un vecteur
+
 def import_file():
-    config_import = config.get("import_file").get("v.in.lidar")
+    config_import = config.get("import_file").get("v.in.lidar")
+
     #Le flag e permet de mettre la region correspondante a la donnee importee en region par defaut, de ce fait, inutile de recharger la region dans la suite du code
     Module("v.in.lidar",
            flags="tboe",
@@ -62,14 +64,12 @@ def import_file():
            overwrite=True
           )
 
-def enQueue_regions(regions, i, nRegion, queue):
+def enQueue_regions(regions, i, nRegion, queue, r):
     config_region = config.get("interpolation").get("g.region")
     config_surf = config.get("interpolation").get("v.surf.rst")
     config_gdal = config.get("interpolation").get("r.out.gdal")
-
-    #On recupere la region par defaut et on calcule la distance entre le nord et le sud et l'est et l'ouest
-    r = Region()
 
+    #On recupere la region par defaut et on calcule la distance entre le nord et le sud et l'est et l'ouest
     xDist = r.east - r.west
     yDist = r.north - r.south
     name = "region_" + str(nRegion)
@@ -81,7 +81,6 @@ def enQueue_regions(regions, i, nRegion, queue):
         #Decoupage de la region
         region = Module(
             "g.region",
-            flags = "u",
             vector = config_region.get("vector"), 
             res3 = config_region.get("res3"),
             n = r.north,
@@ -98,7 +97,6 @@ def enQueue_regions(regions, i, nRegion, queue):
         #Decoupage de la region
         region = Module(
             "g.region",
-            flags = "u",
             vector = config_region.get("vector"), 
             res3 = config_region.get("res"),
             n = r.north - yDist/2,
@@ -109,31 +107,25 @@ def enQueue_regions(regions, i, nRegion, queue):
             save = name,
             overwrite = True
         )
-
+
     #On range dans la file le nom de la region que l'on vient de decouper
     queue.put(name)
 
-def interpolation(nomRegion, lock):
+def interpolation(nomRegion, lock):
     config_region = config.get("interpolation").get("g.region")
     config_surf = config.get("interpolation").get("v.surf.rst")
     config_gdal = config.get("interpolation").get("r.out.gdal")
-
     regions = config.get("parallel").get("regions")
-
+
     #On verouille la recuperation de la region a traiter pour eviter que deux process n'interpollent la meme region
-    lock.acquire()
-
-    r = Region()
-
+
     Module(
         "g.region",
-        flags = "du",
+        flags = "d",
         region = nomRegion
-    )
-
-    lock.release()
+    )
 
-    #Interpolation
+    #Interpolation
     Module(
         "v.surf.rst",
         input = config_surf.get("input"),
@@ -142,7 +134,7 @@ def interpolation(nomRegion, lock):
         segmax = config_surf.get("segmax"),
         npmin = config_surf.get("npmin"),
         overwrite = True
-    )
+    )
 
     #Enregistrement des regions interpolees en .tif
     Module(
@@ -151,39 +143,36 @@ def interpolation(nomRegion, lock):
         output = config_gdal.get("output") + nomRegion + "_output.tif",
         format = config_gdal.get("format"),
         overwrite = True
-    )
+    )
 
 if __name__ == "__main__":
-    valuesOk = check_values()
-    #Si les valeurs sont bonnes on execute le code sinon on ne fait rien
-    if(valuesOk):
-        #create_new_location()
-        #import_file()
+    #create_new_location()
+    import_file()
 
-        regions = config.get("parallel").get("regions")
-        nbProcesses = config.get("parallel").get("nbProcesses")
-        processes = []
-        i = 0
-        lock = Lock()
+    regions = config.get("parallel").get("regions")
+    nbProcesses = config.get("parallel").get("nbProcesses")
+    processes = []
+    i = 0
+    lock = Lock()
+    q = queue.Queue()
+    region = Region()
 
-        q = queue.Queue()
-
-        #Le i represente le decalage pour obtenir un decoupage de regions qui ont la meme taille
-        for r in range(regions):
-            enQueue_regions(regions, i, r, q)
-            if i < (regions / 2) - 1:
-                i += 1
-            else:
-                i = 0
-
-        #Tant que la file n'est pas vide on lance un nombre de process defini par l'utilisateur. Des qu'un process est fini, il prend en charge une region non traitee dans la file
-        while not q.empty():
-            if len(processes) <= nbProcesses:
-                p = Process(target=interpolation, args=(q.get(), lock))
-                processes.append(p)
-                p.start()
+    #Le i represente le decalage pour obtenir un decoupage de regions qui ont la meme taille
+    for r in range(regions):
+        enQueue_regions(regions, i, r, q, region)
+        if i < (regions / 2) - 1:
+            i += 1
+        else:
+            i = 0
 
-            for p in processes:
-                if not p.is_alive():
-                    processes.remove(p)
-                    break
+    #Tant que la file n'est pas vide on lance un nombre de process defini par l'utilisateur. Des qu'un process est fini, il prend en charge une region non traitee dans la file
+    while not q.empty():
+        if len(processes) <= nbProcesses:
+            p = Process(target=interpolation, args=(q.get(), lock))
+            processes.append(p)
+            p.start()
+
+        for p in processes:
+            if not p.is_alive():
+                processes.remove(p)
+                break
