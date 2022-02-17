@@ -1,6 +1,8 @@
 from grass.pygrass.modules import Module
 from grass.pygrass.gis.region import Region
 from grass.script import core as grass
+
+from grass.pygrass import raster
 from multiprocessing import Process, Lock
 import json
 import time
@@ -64,7 +66,7 @@ def import_file():
            overwrite=True
           )
 
-def enQueue_regions(regions, i, nRegion, queue, r):
+def enQueue_regions(regions, i, nRegion, r, lock):
     config_region = config.get("interpolation").get("g.region")
     config_surf = config.get("interpolation").get("v.surf.rst")
     config_gdal = config.get("interpolation").get("r.out.gdal")
@@ -72,9 +74,13 @@ def enQueue_regions(regions, i, nRegion, queue, r):
     #On recupere la region par defaut et on calcule la distance entre le nord et le sud et l'est et l'ouest
     xDist = r.east - r.west
     yDist = r.north - r.south
-    name = "region_" + str(nRegion)
 
     regions = config.get("parallel").get("regions")
+
+    lock.acquire()
+
+    name = "region_" + str(nRegion)
+    elevation = name + "_elevation"
 
     #Si cette condition est verifiee, la region se trouvera dans la partie haute du jeu de donnees. On ramene donc le sud vers le nord
     if(nRegion < regions/2):
@@ -103,45 +109,20 @@ def enQueue_regions(regions, i, nRegion, queue, r):
             s = r.south,
             e = r.east - (((regions/2 - 1)-i) * (xDist/(regions/2))),
             w = r.west + i * (xDist/(regions/2)),
-            grow = config_region.get("grow"),
             save = name,
             overwrite = True
         )
 
-    #On range dans la file le nom de la region que l'on vient de decouper
-    queue.put(name)
-
-def interpolation(nomRegion, lock):
-    config_region = config.get("interpolation").get("g.region")
-    config_surf = config.get("interpolation").get("v.surf.rst")
-    config_gdal = config.get("interpolation").get("r.out.gdal")
-    regions = config.get("parallel").get("regions")
-
-    #On verouille la recuperation de la region a traiter pour eviter que deux process n'interpollent la meme region
+    lock.release()
 
-    Module(
-        "g.region",
-        flags = "d",
-        region = nomRegion
-    )
-
-    #Interpolation
+    #Interpolation
     Module(
         "v.surf.rst",
         input = config_surf.get("input"),
-        elevation = nomRegion + "_elevation",
+        elevation = elevation,
         smooth = config_surf.get("smooth"),
         segmax = config_surf.get("segmax"),
         npmin = config_surf.get("npmin"),
-        overwrite = True
-    )
-
-    #Enregistrement des regions interpolees en .tif
-    Module(
-        "r.out.gdal",
-        input = nomRegion + "_elevation",
-        output = config_gdal.get("output") + nomRegion + "_output.tif",
-        format = config_gdal.get("format"),
         overwrite = True
     )
 
@@ -152,23 +133,39 @@ if __name__ == "__main__":
     regions = config.get("parallel").get("regions")
     nbProcesses = config.get("parallel").get("nbProcesses")
     processes = []
-    i = 0
+    regionsList = []
+    decalage = 0
+    r = 0
+    q = queue.Queue()
+    region = Region()
     lock = Lock()
-    q = queue.Queue()
-    region = Region()
 
-    #Le i represente le decalage pour obtenir un decoupage de regions qui ont la meme taille
-    for r in range(regions):
+    for r in range(regions):
+        p = Process(target=enQueue_regions, args=(regions, decalage, r, region, lock))
+        processes.append(p)
+        p.start()
+
+        if decalage < (regions / 2) - 1:
+            decalage += 1
+        else:
+            decalage = 0
+
+        for p in processes:
+            if not p.is_alive():
+                processes.remove(p)
+                break
+
+"""
         enQueue_regions(regions, i, r, q, region)
         if i < (regions / 2) - 1:
             i += 1
         else:
-            i = 0
+            i = 0
 
     #Tant que la file n'est pas vide on lance un nombre de process defini par l'utilisateur. Des qu'un process est fini, il prend en charge une region non traitee dans la file
     while not q.empty():
-        if len(processes) <= nbProcesses:
-            p = Process(target=interpolation, args=(q.get(), lock))
+        if len(processes) < nbProcesses:
+            p = Process(target=interpolation, args=(q.get(), lock, elevationList,))
             processes.append(p)
             p.start()
 
@@ -176,3 +173,7 @@ if __name__ == "__main__":
             if not p.is_alive():
                 processes.remove(p)
                 break
+
+    print(q.empty())
+    print("coucou")
+"""
