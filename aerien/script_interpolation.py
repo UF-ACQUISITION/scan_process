@@ -1,14 +1,11 @@
 from grass.pygrass.modules import Module
 from grass.pygrass.gis.region import Region
 from grass.script import core as grass
-
-from grass.pygrass import raster
 from multiprocessing import Process, Lock
 import json
 import time
-import queue
 
-with open("D:\\Documents\\GitHub\\scan_process\\aerien\\config_dev.json") as jsonFile:
+with open(input("Veuillez entrer le chemin vers votre fichier de config : ")) as jsonFile:
     config = json.load(jsonFile)
     jsonFile.close()
 
@@ -53,7 +50,6 @@ def create_new_location():
           )
 
 #Permet d'importer le jeu de donnees a traiter, ici, on importe un nuage de points qui va etre stocke sous la forme d'un vecteur
-
 def import_file():
     config_import = config.get("import_file").get("v.in.lidar")
 
@@ -75,7 +71,7 @@ def interpolation(regions, i, nRegion, r, lock):
     yDist = r.north - r.south
 
     regions = config.get("parallel").get("regions")
-
+
     #Lock pour ne pas que plusieurs process calculent une meme region
     lock.acquire()
 
@@ -114,7 +110,7 @@ def interpolation(regions, i, nRegion, r, lock):
         )
 
     lock.release()
-
+    
     #Interpolation
     Module(
         "v.surf.rst",
@@ -127,20 +123,20 @@ def interpolation(regions, i, nRegion, r, lock):
     )
 
 
-if __name__ == "__main__":
-    valeursOk = check_values()
-    #Si les valeurs sont coherentes on execute le code sinon on ne fait rien
+if __name__ == "__main__":
+    valeursOk = check_values()
+    #Si les valeurs sont coherentes on execute le code sinon on ne fait rien
     if(valeursOk):
-        #create_new_location()
+        create_new_location()
         import_file()
-
         regions = config.get("parallel").get("regions")
         nbProcesses = config.get("parallel").get("nbProcesses")
         processes = []
         decalage = 0
         region = Region()
         lock = Lock()
-
+
+
         #La variable decalage represente le decalage pour obtenir un decoupage de regions qui ont la meme taille
         for r in range(regions):
             p = Process(target=interpolation, args=(regions, decalage, r, region, lock))
