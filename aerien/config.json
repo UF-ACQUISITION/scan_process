@@ -31,11 +31,6 @@
       "dmin": "Distance minimale entre les points (sans guillemets)",
       "segmax": "Nombre maximal de points dans un segment (sans guillemets)",
       "npmin": "Nombre minimal de points pour l'approximation dans un segment (> segmax, sans guillemets)"
-    },
-    "r.out.gdal": {
-      "input": "elevation@mapset_name",
-      "output": "Chemin vers le fichier de sortie.",
-      "format": "Format du fichier."
     }
   }
 }

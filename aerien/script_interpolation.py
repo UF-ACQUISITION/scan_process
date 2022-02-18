@@ -66,17 +66,17 @@ def import_file():
            overwrite=True
           )
 
-def enQueue_regions(regions, i, nRegion, r, lock):
+def interpolation(regions, i, nRegion, r, lock):
     config_region = config.get("interpolation").get("g.region")
     config_surf = config.get("interpolation").get("v.surf.rst")
-    config_gdal = config.get("interpolation").get("r.out.gdal")
 
     #On recupere la region par defaut et on calcule la distance entre le nord et le sud et l'est et l'ouest
     xDist = r.east - r.west
     yDist = r.north - r.south
 
     regions = config.get("parallel").get("regions")
-
+
+    #Lock pour ne pas que plusieurs process calculent une meme region
     lock.acquire()
 
     name = "region_" + str(nRegion)
@@ -114,7 +114,7 @@ def enQueue_regions(regions, i, nRegion, r, lock):
         )
 
     lock.release()
-
+
     #Interpolation
     Module(
         "v.surf.rst",
@@ -124,56 +124,35 @@ def enQueue_regions(regions, i, nRegion, r, lock):
         segmax = config_surf.get("segmax"),
         npmin = config_surf.get("npmin"),
         overwrite = True
-    )
+    )
 
-if __name__ == "__main__":
-    #create_new_location()
-    import_file()
 
-    regions = config.get("parallel").get("regions")
-    nbProcesses = config.get("parallel").get("nbProcesses")
-    processes = []
-    regionsList = []
-    decalage = 0
-    r = 0
-    q = queue.Queue()
-    region = Region()
-    lock = Lock()
+if __name__ == "__main__":
+    valeursOk = check_values()
+    #Si les valeurs sont coherentes on execute le code sinon on ne fait rien
+    if(valeursOk):
+        #create_new_location()
+        import_file()
 
-    for r in range(regions):
-        p = Process(target=enQueue_regions, args=(regions, decalage, r, region, lock))
-        processes.append(p)
-        p.start()
+        regions = config.get("parallel").get("regions")
+        nbProcesses = config.get("parallel").get("nbProcesses")
+        processes = []
+        decalage = 0
+        region = Region()
+        lock = Lock()
 
-        if decalage < (regions / 2) - 1:
-            decalage += 1
-        else:
-            decalage = 0
-
-        for p in processes:
-            if not p.is_alive():
-                processes.remove(p)
-                break
-
-"""
-        enQueue_regions(regions, i, r, q, region)
-        if i < (regions / 2) - 1:
-            i += 1
-        else:
-            i = 0
-
-    #Tant que la file n'est pas vide on lance un nombre de process defini par l'utilisateur. Des qu'un process est fini, il prend en charge une region non traitee dans la file
-    while not q.empty():
-        if len(processes) < nbProcesses:
-            p = Process(target=interpolation, args=(q.get(), lock, elevationList,))
+        #La variable decalage represente le decalage pour obtenir un decoupage de regions qui ont la meme taille
+        for r in range(regions):
+            p = Process(target=interpolation, args=(regions, decalage, r, region, lock))
             processes.append(p)
             p.start()
 
-        for p in processes:
-            if not p.is_alive():
-                processes.remove(p)
-                break
+            if decalage < (regions / 2) - 1:
+                decalage += 1
+            else:
+                decalage = 0
 
-    print(q.empty())
-    print("coucou")
-"""
+            for p in processes:
+                if not p.is_alive():
+                    processes.remove(p)
+                    break
