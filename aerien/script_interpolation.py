@@ -3,9 +3,8 @@ from grass.pygrass.gis.region import Region
 from grass.script import core as grass
 from multiprocessing import Process, Lock
 import json
-import time
 
-with open(input("Veuillez entrer le chemin vers votre fichier de config : ")) as jsonFile:
+with open(input("Entrez le chemin vers votre fichier de config : ")) as jsonFile:
     config = json.load(jsonFile)
     jsonFile.close()
 
@@ -50,6 +49,7 @@ def create_new_location():
           )
 
 #Permet d'importer le jeu de donnees a traiter, ici, on importe un nuage de points qui va etre stocke sous la forme d'un vecteur
+
 def import_file():
     config_import = config.get("import_file").get("v.in.lidar")
 
@@ -71,9 +71,6 @@ def interpolation(regions, i, nRegion, r, lock):
     yDist = r.north - r.south
 
     regions = config.get("parallel").get("regions")
-
-    #Lock pour ne pas que plusieurs process calculent une meme region
-    lock.acquire()
 
     name = "region_" + str(nRegion)
     elevation = name + "_elevation"
@@ -109,8 +106,6 @@ def interpolation(regions, i, nRegion, r, lock):
             overwrite = True
         )
 
-    lock.release()
-    
     #Interpolation
     Module(
         "v.surf.rst",
@@ -122,13 +117,13 @@ def interpolation(regions, i, nRegion, r, lock):
         overwrite = True
     )
 
-
 if __name__ == "__main__":
     valeursOk = check_values()
     #Si les valeurs sont coherentes on execute le code sinon on ne fait rien
     if(valeursOk):
         create_new_location()
         import_file()
+
         regions = config.get("parallel").get("regions")
         nbProcesses = config.get("parallel").get("nbProcesses")
         processes = []
@@ -136,12 +131,13 @@ if __name__ == "__main__":
         region = Region()
         lock = Lock()
 
-
         #La variable decalage represente le decalage pour obtenir un decoupage de regions qui ont la meme taille
         for r in range(regions):
-            p = Process(target=interpolation, args=(regions, decalage, r, region, lock))
-            processes.append(p)
-            p.start()
+            if len(processes) < nbProcesses:
+
+                p = Process(target=interpolation, args=(regions, decalage, r, region, lock))
+                processes.append(p)
+                p.start()
 
             if decalage < (regions / 2) - 1:
                 decalage += 1
