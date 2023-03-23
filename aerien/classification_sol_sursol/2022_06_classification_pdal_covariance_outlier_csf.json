@@ -1,0 +1,73 @@
+{
+  "pipeline":[
+    {
+        "type":"readers.las"
+    },
+    {
+        "type": "filters.ferry",
+        "dimensions": "=>Classification"
+    },
+    {
+        "type": "filters.assign",
+        "assignment": "Classification[:]=1"
+    },
+    {
+        "type":"filters.assign",
+        "value":
+		[
+		"Classification = 7 WHERE ReturnNumber < 1",
+		"Classification = 7 WHERE NumberOfReturns < 1",
+		"Classification = 0 WHERE ScanAngleRank < -8.5",
+		"Classification = 0 WHERE ScanAngleRank > 8.5"
+		]
+    },
+    {
+        "type":"filters.elm",
+        "cell":20.0,
+        "threshold":1.0,
+        "class":7
+    },
+    {
+        "type":"filters.outlier",
+        "method":"radius",
+        "radius":0.9,
+        "min_k":2,
+        "class":7
+    },
+    {
+        "type":"filters.optimalneighborhood",
+        "min_k":8,
+        "max_k":50,
+		"where":"Classification == 7"
+    },
+    {
+        "type":"filters.assign",
+        "value":
+		[
+		"Classification = 1 WHERE OptimalRadius < 1.5"
+		],
+		"where":"Classification == 7"
+    },
+    {
+        "type":"filters.csf",
+        "resolution":0.5,
+		"returns":"last, only",
+		"threshold":0.5,
+		"smooth":"true",
+		"step":0.4,
+		"rigidness":2,
+		"iterations":500,
+		"where":"Classification == 1"
+    },
+    {
+        "type":"writers.las",
+        "compression":"laszip",
+        "a_srs":"EPSG:2154",
+        "extra_dims":"all",
+        "forward":"all",
+        "offset_x":"0.01",
+        "offset_y":"0.01",
+        "offset_z":"0.01"
+    }
+  ]
+}
