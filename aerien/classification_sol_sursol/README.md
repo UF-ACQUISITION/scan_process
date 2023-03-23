@@ -23,3 +23,5 @@ The datas unproceesed are
 - Classify Outliers as Noise with filters.outlier
 - Reclassify as valids points with a OptimalRadius > 1 with filters.optimalneighborhood and then filters.assign
 - Finally, classify ground and non-ground points with filters.csf
+
+Thanks to [Rush](https://github.com/shenwei356/rush), tiles has been proceesed in parallel to spectacularly increase the computation capacities.
